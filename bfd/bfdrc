@@ -1,0 +1,33 @@
+START_VARIABLES
+denominator: 1000
+N: 19
+n: 5
+m: -5
+M: -19
+END_VARIABLES
+
+# Note: this format will be changed soon. Bfd doesn't currently renice programs, and after thinking about it, I'll probably never add that functionality. Instead bfd will probably use cgroup shares.
+
+# My example usecase is for awesomewm where every tag is COLD/NORMAL/HOT excpet a few that are COLD/COOL/HOT (hidden tag/visible tag/currently focused client)
+# COLD is for processes in other tags and is 0 unless we need it running in background
+# ICE_COLD is for manual freezing and should always be 0
+# COOL/NORMAL are when the process is visible but not selected
+# HOT is when a process is being used. Let's make all gui programs mean in this case so they feel more smooth.
+
+
+#Process    ICE_COLD      COLD        COOL        NORMAL      HOT
+
+!DEFAULT     0             0           100n        1000        1000m
+
+#Applications that spawn windows from the same process need to run in the background to spawn their windows
+!spawners   !DEFAULT       50n         !DEFAULT    !DEFAULT    !DEFAULT
+firefox     !spawners...
+
+#Some processes usually have cool stuff going on in the background. But we can usually get away with nicing them.
+!background  !DEFAULT      1000N       1000N       1000n       1000
+transmission !background  !background !background !background 1000m
+
+!terminals   !background...
+lxterminal   1000         !terminals...
+xterm        !terminals...
+

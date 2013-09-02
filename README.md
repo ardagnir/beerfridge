@@ -7,9 +7,9 @@ Beerfridge consists of two parts. The first, the Beerfridge Client or bfc, sends
 
 Beerfridge is still a work in progress and will probably break your computer. You've been warned.
 
-<H5>Requirements<H5>
+<H5>Requirements</H5>
 Beerfridge needs cgroups to run.
 You will also likely want to have your window manager set up to call the bfc.
 
-<H5>License<H5>
+<H5>License</H5>
 Beerfridge is licensed under the AGPL v3

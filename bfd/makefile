@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS=-c -g -std=gnu99 -O3
+CFLAGS=-c -g -std=gnu99
 LIBS= 
 
 all: bfd

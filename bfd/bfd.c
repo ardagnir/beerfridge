@@ -60,7 +60,7 @@ int main()
     for(long i=0; i<sizeof(m_shelfList)/sizeof(shelf); i++)
     {
         LIST_INIT(&(m_shelfList[i].beerList));
-        //Eventually these should be set with messages, but even then, these are probably good defaults:
+        //Default Values
         m_shelfList[i].closedTemp=COLD;
         m_shelfList[i].openTemp=NORMAL;
         m_shelfTemps[m_shelfList[i].closedTemp]|=i;
@@ -72,11 +72,11 @@ int main()
     while( true )
     {
         message=receiveMessage(fifoin);
-        if(!strcmp(message.type,"exit"))
+        if(!strcmp(message.type, "exit"))
         {
             break;
         }
-        if(strcmp(message.type,"NONE")!=0)
+        if(strcmp(message.type, "NONE")!=0)
         {
             handleMessage( message );
         }
@@ -90,7 +90,8 @@ int main()
 
 long hashify( long num, long size )
 {
-    return (num*37)%size;
+    //This has to be positive, even when num is negative.
+    return (num*num*37)%size;
 }
 
 void stripBeerFridgeCgroup( char* currentCgroup )
@@ -121,12 +122,7 @@ void addToCGroup( const char* typeSignifier, char* locationSignifier, char* curr
     char* echoBuffer;
     int errorCheck;
     char* newCheckLoc;
-    /*
-    while ( currentCgroup!=0 && (newCheckLoc=strstr(currentCgroup,"beerfridge_")))
-    {
-      currentCgroup=strstr(newCheckLoc,"/");
-    }
-    */
+
     stripBeerFridgeCgroup(currentCgroup);
 
     if( currentCgroup[0]=='\0'|| strcmp(currentCgroup, "/")==0 ) 
@@ -425,10 +421,16 @@ void updateTemperature( beer* theBeer )
 
 void addBottleToShelf( long xid, long pid, long shelfNum, bool real )
 {
+    if( pid==0 )
+    {
+      // Some processes (like conky) won't tell you their pid.
+      // Ignoring them is better than crashing.
+      return;
+    }
     bottle* theBottle=getBottle(xid);
     if( !theBottle )
     {
-        theBottle = addBottle(xid, pid, real );
+        theBottle = addBottle(xid, pid, real);
     }
     theBottle->shelves |= 1L<<shelfNum;
     if( !(theBottle->bottleBeer->shelves & 1L<<shelfNum) )
@@ -486,22 +488,14 @@ void updateShelfTemperature( long shelfNum )
 //if old and new temp are the same it gets temporarily set to the wrong value but that doesn't matter since it's single-threaded
 void openShelf( long shelfNum )
 {  
-    long* oldTempInfo=&(m_shelfTemps[ m_shelfList[shelfNum].closedTemp ]); 
-    long* newTempInfo=&(m_shelfTemps[ m_shelfList[shelfNum].openTemp ]); 
-    (*oldTempInfo) &= ~( 1L<<shelfNum );
-    (*newTempInfo) |= 1L<<shelfNum;
     m_openShelves |= 1L<<shelfNum;
-    updateShelfTemperature(shelfNum);
+    shelfTemperatureChange(shelfNum, m_shelfList[shelfNum].closedTemp, m_shelfList[shelfNum].openTemp);
 }
 
 void closeShelf( long shelfNum )
 {  
-    long* oldTempInfo=&(m_shelfTemps[ m_shelfList[shelfNum].openTemp ]); 
-    long* newTempInfo=&(m_shelfTemps[ m_shelfList[shelfNum].closedTemp ]); 
-    (*oldTempInfo) &= ~( 1L<<shelfNum );
-    (*newTempInfo) |= 1L<<shelfNum;
     m_openShelves &= ~( 1L<<shelfNum );
-    updateShelfTemperature(shelfNum);
+    shelfTemperatureChange(shelfNum, m_shelfList[shelfNum].openTemp, m_shelfList[shelfNum].closedTemp);
 }
 
 Message receiveMessage(FILE* fifoin)
@@ -547,29 +541,20 @@ Message receiveMessage(FILE* fifoin)
 
 void handleMessage(Message message)
 {
-        if(!strcmp(message.type,"echo"))
+        if(!strcmp(message.type, "echo"))
         {
             printf(message.content);
         }
-        else if (!strcmp(message.type,"addFakeBottle")) 
+        if (!strcmp(message.type, "addBottle")) 
         {
             char* endPoint;
             long xid = strtol(message.content, &endPoint, 10);
             long pid = strtol(endPoint, &endPoint, 10);
             long shelfNum = strtol(endPoint, NULL, 10);
 
-            addBottleToShelf( xid, pid, shelfNum, 0 );
+            addBottleToShelf( xid, pid, shelfNum, xid>0 );
         }
-        else if (!strcmp(message.type,"addBottle")) 
-        {
-            char* endPoint;
-            long xid = strtol(message.content, &endPoint, 10);
-            long pid = strtol(endPoint, &endPoint, 10);
-            long shelfNum = strtol(endPoint, NULL, 10);
-
-            addBottleToShelf( xid, pid, shelfNum, true );
-        }
-        else if (!strcmp(message.type,"removeBottle"))
+        else if (!strcmp(message.type, "removeBottle"))
         {
             char* endPoint;
             long xid = strtol(message.content, &endPoint, 10);
@@ -577,15 +562,23 @@ void handleMessage(Message message)
             removeBottleFromShelf( xid, shelfNum );
         }
     
-        else if (!strcmp(message.type,"openShelf"))
+        else if (!strcmp(message.type, "openShelf"))
         {
             long shelfNum = strtol(message.content, NULL, 10);
             openShelf( shelfNum );
         }
-        else if (!strcmp(message.type,"closeShelf"))
+        else if (!strcmp(message.type, "closeShelf"))
         {
             long shelfNum = strtol(message.content, NULL, 10);
             closeShelf( shelfNum );
+        }
+        else if (!strcmp(message.type, "setShelfTemp"))
+        {
+            char* endPoint;
+            long shelf = strtol(message.content, &endPoint, 10);
+            long openTemp = strtol(endPoint, &endPoint, 10);
+            long closeTemp = strtol(endPoint, NULL, 10);
+            setShelfTemp(shelf, (ThawState)openTemp, (ThawState)closeTemp);
         }
         else
         {
@@ -611,4 +604,38 @@ char* getProcessNameFromPid(long pid, char* data, long size)
 
     free(fileName);
     return data;
+}
+
+void setShelfTemp( long shelfNum, ThawState openTemp, ThawState closedTemp)
+{
+  if(shelfNum < NUM_SHELVES)
+  {
+      long oldOpen = m_shelfList[shelfNum].openTemp;
+      long oldClosed = m_shelfList[shelfNum].closedTemp;
+      m_shelfList[shelfNum].closedTemp = openTemp;
+      m_shelfList[shelfNum].openTemp = closedTemp;
+      if(m_openShelves & 1<<shelfNum)
+      {
+          shelfTemperatureChange(shelfNum, oldOpen, openTemp);
+      }
+      else
+      {
+          shelfTemperatureChange(shelfNum, oldClosed, closedTemp);
+      }
+
+  }
+  else
+  {
+      fprintf(stderr, "Invalid shelfNum: %d", shelfNum);
+  }
+}
+
+//Should be called AFTER whatever changes the temperature
+void shelfTemperatureChange(long shelfNum, ThawState oldTemp, ThawState newTemp)
+{
+    long* oldTempInfo=&(m_shelfTemps[ oldTemp ]); 
+    long* newTempInfo=&(m_shelfTemps[ newTemp ]); 
+    (*oldTempInfo) &= ~( 1L<<shelfNum );
+    (*newTempInfo) |= 1L<<shelfNum;
+    updateShelfTemperature(shelfNum);
 }

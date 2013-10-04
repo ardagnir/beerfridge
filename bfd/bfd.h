@@ -68,6 +68,10 @@ void removeBeerNodeFromShelf( beer* theBeer, long shelfNum );
 
 void removeBeerCgroup( beer* theBeer );
 
+void shelfTemperatureChange(long shelfNum, ThawState oldTemp, ThawState newTemp);
+
+void setShelfTemp( long shelfNum, ThawState openTemp, ThawState closeTemp);
+
 inline ThawState maxTemp( ThawState state1, ThawState state2)
 {
     if( state1 > state2 )

@@ -253,7 +253,8 @@ beer* addBeer( long pid )
     theBeer->pid = pid;
     theBeer->shelves = 0;
     theBeer->realBottles = 0;
-    theBeer->speed = 1000;
+    theBeer->speedShares = 1000;
+    theBeer->speedCap = 1000;
     //This should probably be an uninitialized value instead.
     theBeer->temperature = HOT;
     loadTemperatureReactions( theBeer );
@@ -339,13 +340,20 @@ bool updateShelfMembership( beer* theBeer)
     return ret;
 }
 
-void setBeerSpeed( beer* theBeer, long speed )
+void setBeerSpeed( beer* theBeer, long speedShares, long speedCap )
 {
     char* command;
-    if( theBeer->speed != speed )
+    if( theBeer->speedShares != speedShares )
     {
-        theBeer->speed = speed;
-        asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.cfs_quota_us -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speed*100 );
+        theBeer->speedShares = speedShares;
+        asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.shares -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speedShares );
+        system2( command );  
+        free( command );
+    }
+    if( theBeer->speedCap = speedCap )
+    {
+        theBeer->speedCap = speedCap;
+        asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.cfs_quota_us -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speedCap*100 );
         system2( command );  
         free( command );
     }
@@ -369,20 +377,22 @@ void unfreezeBeer( beer* theBeer )
 
 void setTemperature( beer* theBeer, ThawState temperature )
 {
-    long currentReaction = theBeer->rule->cpuShares[ temperature ];
-    long oldReaction = theBeer->rule->cpuShares[ theBeer->temperature ];
+    long currentReactionShares = theBeer->rule->cpuShares[ temperature ];
+    long currentReactionCap = theBeer->rule->cpuShares[ temperature ];
+    long oldReactionShares = theBeer->rule->cpuShares[ theBeer->temperature ];
+    long oldReactionCap = theBeer->rule->cpuShares[ theBeer->temperature ];
     theBeer->temperature = temperature;
-    if( currentReaction== 0 )
+    if( currentReactionShares == 0 )
     {
-        if( oldReaction != 0 )
+        if( oldReactionShares != 0 )
         {
             freezeBeer( theBeer );
         }
     }
     else
     {
-        setBeerSpeed( theBeer, theBeer->rule->cpuShares[ temperature ] );
-        if( oldReaction == 0 )
+        setBeerSpeed( theBeer, currentReactionShares, currentReactionCap );
+        if( oldReactionShares == 0 )
         {
             unfreezeBeer( theBeer );
         }

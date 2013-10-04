@@ -40,7 +40,7 @@ typedef struct processRule
 {
     char* processName;
     long cpuShares[NUM_TEMPERATURES];
-    long niceVals[NUM_TEMPERATURES];
+    long cpuCap[NUM_TEMPERATURES];
 } processRule;
 
 typedef struct beer
@@ -48,7 +48,8 @@ typedef struct beer
     long pid;
     long shelves;
     long realBottles;
-    long speed;
+    long speedShares;
+    long speedCap;
     long temperature;
     const processRule* rule; 
     LIST_HEAD(bottle_list, bottle) bottles;

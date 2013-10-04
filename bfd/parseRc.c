@@ -91,7 +91,7 @@ processRule parseRuleLine(char* lineData, processRule** ruleList, long numberRul
     processRule ret;
     char* procName=strtok(lineData, " \t");
     char* value='\0';
-    char* niceCheck;
+    char* dashCheck;
     bool ellipsis=false;
     ret.processName=malloc(sizeof(char)*(strlen(procName)+1));
     strcpy(ret.processName, procName);
@@ -115,31 +115,27 @@ processRule parseRuleLine(char* lineData, processRule** ruleList, long numberRul
             if(parentRule)
             {
               ret.cpuShares[i] = parentRule->cpuShares[i];
-              ret.niceVals[i] = parentRule->niceVals[i];
+              ret.cpuCap[i] = parentRule->cpuCap[i];
             }
         }
         else
         {
-            ret.cpuShares[i]=strtol(value, &niceCheck, 10);
-            if(niceCheck)
+            ret.cpuShares[i] = strtol(value, &dashCheck, 10);
+            ret.cpuCap[i] = ret.cpuShares[i];
+            if(dashCheck)
             {
-              if(strncmp(niceCheck, "..",2)==0)
+              if(strncmp(dashCheck, "..",2)==0)
               {
                   ellipsis = true;
-                  ret.niceVals[i] = 0;
               }
               else
               {
-                ret.niceVals[i]=niceCheck[0];
-                if(strncmp(niceCheck+1, "..",2) == 0)
+                ret.cpuCap[i]=strtol(dashCheck, &dashCheck, 10);
+                if(strncmp(dashCheck, "..",2) == 0)
                 {
                     ellipsis = true;
                 }
               }
-            }
-            else
-            {
-              ret.niceVals[i] = 0;
             }
         }
     }
@@ -171,11 +167,6 @@ void finalizeRules(processRule** ruleList, long numberRules)
    for(long i=0; i<numberRules; i++)
    {
        m_ruleList[i]=*ruleList[i];
-       for(long t=0; t<NUM_TEMPERATURES; t++)
-       {
-           //Convert from variable name to value
-           m_ruleList[i].niceVals[t]=m_varTable[ruleList[i]->niceVals[t]];
-       }
        free(ruleList[i]);
    }
    qsort(m_ruleList, numberRules, sizeof(processRule), compareRule);

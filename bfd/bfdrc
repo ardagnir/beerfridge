@@ -1,11 +1,5 @@
-#This is an example of how I want beerfridge to behave. This bfdrc doesn't currently work with beerfridge.
-
 START_VARIABLES
 denominator: 1000
-N: 19
-n: 5
-m: -5
-M: -19
 END_VARIABLES
 
 # My example usecase is for awesomewm where every tag is COLD/NORMAL/HOT excpet a few that are COLD/COOL/HOT (hidden tag/visible tag/currently focused client)

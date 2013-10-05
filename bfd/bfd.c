@@ -147,7 +147,7 @@ void addToCGroup( const char* typeSignifier, char* locationSignifier, char* curr
     }
       
     //Add process to cgroup
-    errorCheck = asprintf( &echoBuffer, "echo %d > %s/tasks", pid, directoryBuffer );
+    errorCheck = asprintf( &echoBuffer, "echo %d > %s/cgroup.procs", pid, directoryBuffer );
     assert( errorCheck !=-1 );
     system2( echoBuffer );
 

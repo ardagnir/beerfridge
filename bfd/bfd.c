@@ -346,7 +346,7 @@ void setBeerSpeed( beer* theBeer, long speedShares, long speedCap )
         system2( command );  
         free( command );
     }
-    if( theBeer->speedCap = speedCap )
+    if( theBeer->speedCap != speedCap )
     {
         theBeer->speedCap = speedCap;
         asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.cfs_quota_us -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speedCap*100 );
@@ -374,9 +374,9 @@ void unfreezeBeer( beer* theBeer )
 void setTemperature( beer* theBeer, ThawState temperature )
 {
     long currentReactionShares = theBeer->rule->cpuShares[ temperature ];
-    long currentReactionCap = theBeer->rule->cpuShares[ temperature ];
+    long currentReactionCap = theBeer->rule->cpuCap[ temperature ];
     long oldReactionShares = theBeer->rule->cpuShares[ theBeer->temperature ];
-    long oldReactionCap = theBeer->rule->cpuShares[ theBeer->temperature ];
+    long oldReactionCap = theBeer->rule->cpuCap[ theBeer->temperature ];
     theBeer->temperature = temperature;
     if( currentReactionShares == 0 )
     {

@@ -130,7 +130,7 @@ processRule parseRuleLine(char* lineData, processRule** ruleList, long numberRul
               }
               else
               {
-                ret.cpuCap[i]=strtol(dashCheck, &dashCheck, 10);
+                ret.cpuCap[i]=strtol(dashCheck+1, &dashCheck, 10);
                 if(strncmp(dashCheck, "..",2) == 0)
                 {
                     ellipsis = true;

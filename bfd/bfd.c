@@ -427,26 +427,22 @@ void changeMuteBeer(beer* theBeer, bool mute)
 
 void updateTemperature( beer* theBeer )
 {
-   long openMembership;
-   if( openMembership = theBeer->shelves & m_openShelves )
-   {
-        for( int i=(int)ICE_COLD; i<NUM_TEMPERATURES; i++ )
-        {
-            if( m_shelfTemps[i] & openMembership )
-            {
-                setTemperature( theBeer, (ThawState)i );
-                return;
-            }
-        }
-   }
-   for( int i=(int)NUM_TEMPERATURES-1; i>=ICE_COLD; i-- )
-   {
-        if( m_shelfTemps[i] & theBeer->shelves )
-        {
-            setTemperature( theBeer, (ThawState)i );
-            return;
-        }
-   }
+    long openMembership;
+    //Priority is from hottest to coldest, except that ice_cold has top priority.
+    //Later there should be some sort of dynamic prioirty.
+    if( m_shelfTemps[ICE_COLD] & theBeer->shelves )
+    {
+       setTemperature( theBeer, ICE_COLD );
+       return;
+    }
+    for( int i=(int)NUM_TEMPERATURES-1; i>ICE_COLD; i-- )
+    {
+         if( m_shelfTemps[i] & theBeer->shelves )
+         {
+             setTemperature( theBeer, (ThawState)i );
+             return;
+         }
+    }
 }
 
 void addBottleToShelf( long xid, long pid, long shelfNum, bool real )

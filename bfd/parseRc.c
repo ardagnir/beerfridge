@@ -33,7 +33,6 @@ void parseRcFile()
     processRule** ruleList = malloc(sizeof(processRule*)*1024);
     long numberRules = 0;
     bool variables = false;
-    memset(m_varTable, 0, 256);
     char* lineData;
     while(fgets(inString, 799, bfdrc) )
     {
@@ -159,13 +158,17 @@ processRule parseRuleLine(char* lineData, processRule** ruleList, long numberRul
 void processVariableLine(char* lineData)
 {
     char* varName=strtok(lineData, ": ");
-    if(strlen(varName)==1)
+    if( strcmp(varName, "multiplier")==0 )
     {
-      m_varTable[varName[0]]=atoi(strtok(0, ": ")); 
+      m_multiplier=atoi(strtok(0, ": "));
     }
     else if( strcmp(varName, "denominator")==0 )
     {
       m_denominator=atoi(strtok(0, ": "));
+    }
+    else if( strcmp(varName, "guibias")==0 )
+    {
+      m_guibias=atoi(strtok(0, ": "));
     }
 }
 

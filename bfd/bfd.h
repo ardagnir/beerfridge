@@ -74,6 +74,8 @@ void setShelfTemp( long shelfNum, ThawState openTemp, ThawState closeTemp);
 
 void changeMuteBeer(beer* theBeer, bool mute);
 
+void setDenominator(long pid);
+
 inline ThawState maxTemp( ThawState state1, ThawState state2)
 {
     if( state1 > state2 )

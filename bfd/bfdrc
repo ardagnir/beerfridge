@@ -1,5 +1,15 @@
 START_VARIABLES
+#This is multiplied times denominator and all the numerators and so doesn't affect how much processes are slowed down. But it affects the actual numbers stored in the cgroup files.
+multiplier: 100
+
+#Denominator represents 100%. Values set to denominator are allowed 100% of the cpu.
 denominator: 1000
+
+#Guibias determines how processes affected by beerfridge are weighted against other processes.
+# 8 is balanced (at denominator, bf is given the same numer of shares as other programs)
+# 2 gives bf programs a quarter the cpu shares as 8
+# 16 gives them twice as many cpu shares as 8
+guibias: 10
 END_VARIABLES
 
 # My example usecase is for awesomewm where every tag is COLD/NORMAL/HOT excpet a few that are COLD/COOL/HOT (hidden tag/visible tag/currently focused client)

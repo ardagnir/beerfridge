@@ -34,8 +34,9 @@ static void processVariableLine(char* inString);
 
 static void finalizeRules(processRule** ruleList, long numberRules);
         
-static signed char m_varTable[256];
-static long m_denominator;
+long m_multiplier;
+long m_denominator;
+long m_guibias;
 static processRule* m_ruleList;
 static long m_numberRules;
 

@@ -256,9 +256,18 @@ beer* addBeer( long pid )
     loadTemperatureReactions( theBeer );
     LIST_INIT( &(theBeer->bottles) );
     cgroupProcessAndChildrenRecursively( "cpu", pid, pid );
+    setDenominator(pid);
     cgroupProcessAndChildrenRecursively( "freezer", pid, pid );
     LIST_INSERT_HEAD( &(m_beerTable[hashVal]), theBeer, hashNode) ;
     return theBeer;
+}
+
+void setDenominator(long pid)
+{
+    char* command;
+    asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.cfs_quota_us -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, pid,  m_denominator*m_multiplier );
+    system(command);
+    free(command);
 }
 
 void removeBeer( beer* theBeer )
@@ -342,14 +351,15 @@ void setBeerSpeed( beer* theBeer, long speedShares, long speedCap )
     if( theBeer->speedShares != speedShares )
     {
         theBeer->speedShares = speedShares;
-        asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.shares -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speedShares );
+        //1024 is the default number of shares, guibias uses 8 as the balanced value
+        asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.shares -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speedShares*(1024/8)*m_guibias/m_denominator );
         system2( command );  
         free( command );
     }
     if( theBeer->speedCap != speedCap )
     {
         theBeer->speedCap = speedCap;
-        asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.cfs_quota_us -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speedCap*100 );
+        asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.cfs_quota_us -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speedCap*m_multiplier );
         system2( command );  
         free( command );
     }
@@ -409,7 +419,7 @@ void changeMuteBeer(beer* theBeer, bool mute)
 {
     char* muteCommand;
 
-    asprintf(&muteCommand, "find %s -wholename *beerfridge_%d/cgroup.procs -exec cat {} \\; | mutepids %d", m_speedGroupLocation, theBeer->pid, mute);
+    asprintf(&muteCommand, "find %s -wholename *beerfridge_%d/cgroup.procs -exec cat {} \\; | mutepids %d &", m_speedGroupLocation, theBeer->pid, mute);
     system2(muteCommand);
 }
 

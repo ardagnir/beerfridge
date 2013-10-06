@@ -6,15 +6,17 @@ index=-1
 while read line; do
   pidlist+=" $line"
 done
+type=index
 
-pacmd list-sink-inputs | while read line; do
-  tempIndex=$(echo $line | sed -nr 's/^\s*index: (.*)/\1/p')
-  if [ -n "$tempIndex" ]; then
-    index=$tempIndex
+#this sed should return an index on every even line and a pid on every odd one
+pacmd list-sink-inputs | sed -nr -e 's/^\s*index: (.*)/\1/p' -e 's/^\s*application\.process\.id = "(.*)"/\1/p' | while read line; do
+  if [ "$type" == "index" ]; then
+    index=$line
+    type=pid
   else
-    pid=$(echo $line | sed -nr 's/^\s*application\.process\.id = "(.*)"/\1/p')
+    type=index
     for pidInList in $pidlist; do
-      if [ "$pid" == "$pidInList" ]; then
+      if [ "$line" == "$pidInList" ]; then
         pacmd set-sink-input-mute $index $1 > /dev/null
         break
       fi

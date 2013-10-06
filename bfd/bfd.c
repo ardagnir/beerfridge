@@ -352,14 +352,15 @@ void setBeerSpeed( beer* theBeer, long speedShares, long speedCap )
     {
         theBeer->speedShares = speedShares;
         //1024 is the default number of shares, guibias uses 8 as the balanced value
-        asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.shares -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speedShares*(1024/8)*m_guibias/m_denominator );
+        asprintf( &command, "/bin/echo %d | tee $(find %s -wholename *beerfridge_%d/cpu.shares)", speedShares*(1024/8)*m_guibias/m_denominator, m_speedGroupLocation, theBeer->pid);
+        //asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.shares -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speedShares*(1024/8)*m_guibias/m_denominator );
         system2( command );  
         free( command );
     }
     if( theBeer->speedCap != speedCap )
     {
         theBeer->speedCap = speedCap;
-        asprintf( &command, "find %s -wholename *beerfridge_%d/cpu.cfs_quota_us -exec sh -c '/bin/echo %d > $1' - {} \\;", m_speedGroupLocation, theBeer->pid,  speedCap*m_multiplier );
+        asprintf( &command, "/bin/echo %d | tee $(find %s -wholename *beerfridge_%d/cpu.cfs_quota_us)",  speedCap*m_multiplier , m_speedGroupLocation, theBeer->pid);
         system2( command );  
         free( command );
     }
@@ -368,7 +369,7 @@ void setBeerSpeed( beer* theBeer, long speedShares, long speedCap )
 void freezeBeer( beer* theBeer )
 {
       char* command;
-      asprintf( &command, "find %s -wholename *beerfridge_%d/freezer.state -exec sh -c '/bin/echo FROZEN > $1' - {} \\;", m_freezerGroupLocation, theBeer->pid );
+      asprintf( &command, "/bin/echo FROZEN | tee $(find %s -wholename *beerfridge_%d/freezer.state)", m_freezerGroupLocation, theBeer->pid);
       system2( command );
       free( command );
 }
@@ -376,7 +377,7 @@ void freezeBeer( beer* theBeer )
 void unfreezeBeer( beer* theBeer )
 {
       char* command;
-      asprintf( &command, "find %s -wholename *beerfridge_%d/freezer.state -exec sh -c '/bin/echo THAWED > $1' - {} \\;", m_freezerGroupLocation, theBeer->pid );
+      asprintf( &command, "/bin/echo THAWED | tee $(find %s -wholename *beerfridge_%d/freezer.state)", m_freezerGroupLocation, theBeer->pid);
       system2( command );
       free( command );
 }
@@ -419,8 +420,9 @@ void changeMuteBeer(beer* theBeer, bool mute)
 {
     char* muteCommand;
 
-    asprintf(&muteCommand, "find %s -wholename *beerfridge_%d/cgroup.procs -exec cat {} \\; | mutepids %d &", m_speedGroupLocation, theBeer->pid, mute);
+    asprintf(&muteCommand, "find %s -wholename *beerfridge_%d/cgroup.procs -exec cat {} \\; | mutepids %d", m_speedGroupLocation, theBeer->pid, mute);
     system2(muteCommand);
+    free(muteCommand);
 }
 
 void updateTemperature( beer* theBeer )

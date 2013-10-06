@@ -115,6 +115,7 @@ processRule parseRuleLine(char* lineData, processRule** ruleList, long numberRul
             {
               ret.cpuShares[i] = parentRule->cpuShares[i];
               ret.cpuCap[i] = parentRule->cpuCap[i];
+              ret.muted[i] = parentRule->muted[i];
             }
         }
         else

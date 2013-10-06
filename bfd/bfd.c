@@ -371,28 +371,46 @@ void unfreezeBeer( beer* theBeer )
       free( command );
 }
 
-void setTemperature( beer* theBeer, ThawState temperature )
+void setTemperature(beer* theBeer, ThawState temperature)
 {
-    long currentReactionShares = theBeer->rule->cpuShares[ temperature ];
-    long currentReactionCap = theBeer->rule->cpuCap[ temperature ];
-    long oldReactionShares = theBeer->rule->cpuShares[ theBeer->temperature ];
-    long oldReactionCap = theBeer->rule->cpuCap[ theBeer->temperature ];
-    theBeer->temperature = temperature;
-    if( currentReactionShares == 0 )
+    long currentReactionShares = theBeer->rule->cpuShares[temperature];
+    long currentReactionCap    = theBeer->rule->cpuCap[temperature];
+    bool currentMute           = theBeer->rule->muted[temperature];
+    long oldReactionShares     = theBeer->rule->cpuShares[theBeer->temperature];
+    long oldReactionCap        = theBeer->rule->cpuCap[theBeer->temperature];
+    bool oldMute               = theBeer->rule->muted[theBeer->temperature];
+    theBeer->temperature       = temperature;
+    if(currentReactionShares == 0)
     {
-        if( oldReactionShares != 0 )
+        if(oldReactionShares != 0)
         {
-            freezeBeer( theBeer );
+            freezeBeer(theBeer);
         }
     }
     else
     {
-        setBeerSpeed( theBeer, currentReactionShares, currentReactionCap );
-        if( oldReactionShares == 0 )
+        setBeerSpeed(theBeer, currentReactionShares, currentReactionCap );
+        if( oldReactionShares == 0)
         {
-            unfreezeBeer( theBeer );
+            unfreezeBeer(theBeer);
         }
     }
+    if(oldMute && !currentMute)
+    {
+      changeMuteBeer(theBeer, 0);
+    }
+    else if(!oldMute && currentMute)
+    {
+      changeMuteBeer(theBeer, 1);
+    }
+}
+
+void changeMuteBeer(beer* theBeer, bool mute)
+{
+    char* muteCommand;
+
+    asprintf(&muteCommand, "find %s -wholename *beerfridge_%d/cgroup.procs -exec cat {} \\; | mutepids %d", m_speedGroupLocation, theBeer->pid, mute);
+    system2(muteCommand);
 }
 
 void updateTemperature( beer* theBeer )

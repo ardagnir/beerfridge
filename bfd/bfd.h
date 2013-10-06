@@ -72,6 +72,8 @@ void shelfTemperatureChange(long shelfNum, ThawState oldTemp, ThawState newTemp)
 
 void setShelfTemp( long shelfNum, ThawState openTemp, ThawState closeTemp);
 
+void changeMuteBeer(beer* theBeer, bool mute);
+
 inline ThawState maxTemp( ThawState state1, ThawState state2)
 {
     if( state1 > state2 )

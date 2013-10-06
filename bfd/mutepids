@@ -1,0 +1,23 @@
+#!/bin/bash
+# Takes as input a list of pids. Mutes (1) or unmutes (0) these processes depending on the argument $1
+# Requires pulseaudio
+
+index=-1
+while read line; do
+  pidlist+=" $line"
+done
+
+pacmd list-sink-inputs | while read line; do
+  tempIndex=$(echo $line | sed -nr 's/^\s*index: (.*)/\1/p')
+  if [ -n "$tempIndex" ]; then
+    index=$tempIndex
+  else
+    pid=$(echo $line | sed -nr 's/^\s*application\.process\.id = "(.*)"/\1/p')
+    for pidInList in $pidlist; do
+      if [ "$pid" == "$pidInList" ]; then
+        pacmd set-sink-input-mute $index $1 > /dev/null
+        break
+      fi
+    done
+  fi
+done

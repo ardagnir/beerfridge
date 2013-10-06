@@ -41,6 +41,7 @@ typedef struct processRule
     char* processName;
     long cpuShares[NUM_TEMPERATURES];
     long cpuCap[NUM_TEMPERATURES];
+    bool muted[NUM_TEMPERATURES];
 } processRule;
 
 typedef struct beer

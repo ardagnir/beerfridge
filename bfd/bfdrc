@@ -8,19 +8,21 @@ END_VARIABLES
 # ICE_COLD is for manual freezing and should always be 0
 
 # COOL/NORMAL are when the process is visible but not selected
-# HOT is when a process is being used. Let's make all gui programs mean in this case so they feel more smooth.
+# HOT is when a process is being used.
 
+#range is shares-cap
+#m means mute
 
 #Process    ICE_COLD      COLD        COOL        NORMAL      HOT
 
-!DEFAULT     0             0          100-500     300-1000    1000-1000
+!DEFAULT     0m            0m         100-500m    300-1000    1000-1000
 
 #Applications that spawn windows from the same process need to run in the background to spawn their windows
-!spawners   !DEFAULT       50-100     !DEFAULT    !DEFAULT    !DEFAULT
+!spawners   !DEFAULT       50-100m    !DEFAULT    !DEFAULT    !DEFAULT
 firefox     !spawners...
 
 #Some processes usually have cool stuff going on in the background. 
-!background  !DEFAULT      50-1000    100-1000    200-1000    1000-1000
+!background  !DEFAULT      50-1000m   100-1000m   200-1000    1000-1000
 
 !terminals   !background...
 lxterminal   !terminals...    

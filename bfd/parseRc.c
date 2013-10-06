@@ -122,6 +122,7 @@ processRule parseRuleLine(char* lineData, processRule** ruleList, long numberRul
         {
             ret.cpuShares[i] = strtol(value, &dashCheck, 10);
             ret.cpuCap[i] = ret.cpuShares[i];
+            ret.muted[i] = 0;
             if(dashCheck)
             {
               if(strncmp(dashCheck, "..",2)==0)
@@ -130,7 +131,20 @@ processRule parseRuleLine(char* lineData, processRule** ruleList, long numberRul
               }
               else
               {
-                ret.cpuCap[i]=strtol(dashCheck+1, &dashCheck, 10);
+                if(dashCheck[0]=='m')
+                {
+                  ret.muted[i]=1;
+                  dashCheck++;
+                }
+                else
+                {
+                  ret.cpuCap[i]=strtol(dashCheck+1, &dashCheck, 10);
+                  if(dashCheck[0]=='m')
+                  {
+                    ret.muted[i]=1;
+                    dashCheck++;
+                  }
+                }
                 if(strncmp(dashCheck, "..",2) == 0)
                 {
                     ellipsis = true;

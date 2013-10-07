@@ -24,6 +24,8 @@
 
 void parseRcFile();
 
+void processLineData(char* lineData, processRule** ruleList, long* numberRules, bool* variables);
+
 const processRule* lookupRule(const char* processName);
 
 static const processRule* slowLookup(char* processName, processRule** ruleList, long numberRules);

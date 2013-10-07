@@ -19,6 +19,7 @@
  *  along with Beerfridge.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -28,51 +29,76 @@
 
 void parseRcFile()
 {
-    FILE* bfdrc = fopen("bfdrc", "r");
     char inString[800];
     processRule** ruleList = malloc(sizeof(processRule*)*1024);
     long numberRules = 0;
     bool variables = false;
-    char* lineData;
-    while(fgets(inString, 799, bfdrc) )
+    bool found=false;
+    char* homeRcLoc;
+    asprintf(&homeRcLoc, "%s/.bfdrc", getenv("HOME"));
+    FILE* bfdrc = fopen(homeRcLoc, "r");
+    if(bfdrc)
     {
-        lineData = inString;
-        while(isspace(lineData[0]))
+        while(fgets(inString, 799, bfdrc) )
         {
-            lineData++;
+            found=true;
+            processLineData(inString, ruleList, &numberRules, &variables);
         }
-        if(lineData[0]=='\0' || lineData[0]=='#')
+        fclose(bfdrc);
+    }
+    free(homeRcLoc);
+
+    if(!found)
+    {
+        bfdrc = fopen("/etc/bfdrc", "r");
+        if(bfdrc)
         {
-            continue;
-        }
-        else if(variables)
-        {
-            if(strncmp(lineData, "END_VARIABLES", strlen("END_VARIABLES")) ==0 )
-            {
-               variables = false; 
-            }
-            else
-            {
-               processVariableLine(lineData);
-            }
-        }
-        else
-        {
-            if(strncmp(lineData, "START_VARIABLES", strlen("START_VARIABLES")) ==0 )
-            {
-               variables=true;
-            }
-            else
-            {
-               ruleList[numberRules]=malloc(sizeof(processRule));
-               *ruleList[numberRules]=parseRuleLine(lineData, ruleList, numberRules);
-               numberRules++;
-            }
+          while(fgets(inString, 799, bfdrc) )
+          {
+              processLineData(inString, ruleList, &numberRules, &variables);
+          }
+          fclose(bfdrc);
         }
     }
     m_numberRules=numberRules;
     finalizeRules(ruleList, numberRules);
     free(ruleList);
+}
+
+void processLineData(char* lineData, processRule** ruleList, long* numberRules, bool* variables)
+{
+    while(isspace(lineData[0]))
+    {
+        lineData++;
+    }
+    if(lineData[0]=='\0' || lineData[0]=='#')
+    {
+        return;
+    }
+    if(*variables)
+    {
+        if(strncmp(lineData, "END_VARIABLES", strlen("END_VARIABLES")) ==0 )
+        {
+           *variables = false; 
+        }
+        else
+        {
+           processVariableLine(lineData);
+        }
+    }
+    else
+    {
+        if(strncmp(lineData, "START_VARIABLES", strlen("START_VARIABLES")) ==0 )
+        {
+           *variables=true;
+        }
+        else
+        {
+           ruleList[*numberRules]=malloc(sizeof(processRule));
+           *ruleList[*numberRules]=parseRuleLine(lineData, ruleList, *numberRules);
+           (*numberRules)++;
+        }
+    }
 }
 
 const processRule* slowLookup(char* processName, processRule** ruleList, long numberRules)

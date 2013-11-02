@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 
 #include "bfd.h"
@@ -51,6 +52,7 @@ void system2(char* debug)
 
 int main()
 {
+    mkfifo("/tmp/beerfifo", 0666);
     Message message;
     for (int i=0; i<NUM_TEMPERATURES; i++)
     {

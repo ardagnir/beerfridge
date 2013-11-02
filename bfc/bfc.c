@@ -21,7 +21,6 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <string.h>
 
 int main(int argc, char **argv)
@@ -31,15 +30,17 @@ int main(int argc, char **argv)
       return 0;
     }
     char buffer[100];
-    mkfifo("/tmp/beerfifo", 0666);
     FILE* fifo = fopen("/tmp/beerfifo", "w");
-    long cursor=0;
-    cursor += snprintf(buffer+cursor, 99, "%s", argv[1]);
-    for( int i=2; i<argc; i++ )
+    if(fifo)
     {
-        cursor+=snprintf(buffer+cursor, 99-cursor, " %s", argv[i]);
+      long cursor=0;
+      cursor += snprintf(buffer+cursor, 99, "%s", argv[1]);
+      for( int i=2; i<argc; i++ )
+      {
+          cursor+=snprintf(buffer+cursor, 99-cursor, " %s", argv[i]);
+      }
+      fprintf(fifo, "%s\n", buffer);
+      fclose(fifo);
     }
-    fprintf(fifo, "%s\n", buffer); 
-    fclose(fifo);
     return 0;
 }

@@ -188,24 +188,24 @@ void cgroupProcessAndChildrenRecursively( const char* typeSignifier, long pid, l
                }
            }
         }
-    }
-    strtok(cgroup,"\n");
-    addToCGroup( typeSignifier, locationSignifier, strstr(cgroup,"/"), pid, parentPid==pid);
 
-    char* command;
-    asprintf(&command, "ps --ppid %d -o pid=", pid);
-    FILE* children = popen(command, "r" );
-    free(command);
-    if(children)
-    {
-        char child[64];
-        while(fgets(child, 63, children))
+        strtok(cgroup,"\n");
+        addToCGroup( typeSignifier, locationSignifier, strstr(cgroup,"/"), pid, parentPid==pid);
+
+        char* command;
+        asprintf(&command, "ps --ppid %d -o pid=", pid);
+        FILE* children = popen(command, "r" );
+        free(command);
+        if(children)
         {
-           cgroupProcessAndChildrenRecursively( typeSignifier, strtol(child, 0, 10), parentPid);
+            char child[64];
+            while(fgets(child, 63, children))
+            {
+               cgroupProcessAndChildrenRecursively( typeSignifier, strtol(child, 0, 10), parentPid);
+            }
         }
-        
+        pclose(children);
     }
-    pclose(children);
 }
 
 bottle* getBottle( long xid )
@@ -621,14 +621,21 @@ char* getProcessNameFromPid(long pid, char* data, long size)
 
     asprintf( &fileName, "/proc/%d/comm", pid );
     FILE* file = fopen(fileName, "rt");
-    fgets(data, size, file);
-
-    //Remove trailing newline
-    long length=strlen(data);
-    if(length>0)
+    if(file)
     {
-      data[length-1]='\0';
+        fgets(data, size, file);
+        //Remove trailing newline
+        long length=strlen(data);
+        if(length>0)
+        {
+          data[length-1]='\0';
+        }
     }
+    else
+    {
+        sprintf(data,"__unknown");
+    }
+
 
     free(fileName);
     return data;
